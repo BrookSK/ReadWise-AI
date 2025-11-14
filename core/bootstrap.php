@@ -2,16 +2,20 @@
 // Autoloader simples PSR-4 like
 spl_autoload_register(function ($class) {
     $baseDir = __DIR__ . '/../';
-    $class = str_replace('\\', '/', $class);
-    $paths = [
-        $baseDir . $class . '.php',
+    $prefixes = [
+        'Core\\' => 'core/',
+        'App\\'  => 'app/',
     ];
-    foreach ($paths as $file) {
-        if (file_exists($file)) {
-            require_once $file;
-            return;
+    foreach ($prefixes as $prefix => $dir) {
+        if (strncmp($class, $prefix, strlen($prefix)) === 0) {
+            $relative = substr($class, strlen($prefix));
+            $file = $baseDir . $dir . str_replace('\\', '/', $relative) . '.php';
+            if (file_exists($file)) { require_once $file; return; }
         }
     }
+    // Fallback genérico
+    $fallback = $baseDir . str_replace('\\', '/', $class) . '.php';
+    if (file_exists($fallback)) { require_once $fallback; }
 });
 
 require_once __DIR__ . '/../config/config.php';
