@@ -1,0 +1,4 @@
+ALTER TABLE users 
+  ADD COLUMN balance DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER uso_gratuito_usado,
+  ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0 AFTER balance,
+  ADD COLUMN avatar_url VARCHAR(255) NULL AFTER is_admin;
