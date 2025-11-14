@@ -16,7 +16,7 @@ class AdminController extends Controller
     {
         $this->guard();
         $pdo = DB::pdo();
-        $get = $pdo->prepare('SELECT `key`,`value` FROM system_settings WHERE `key` IN ("asaas_api_key","asaas_env","chatgpt_api_key")');
+        $get = $pdo->prepare('SELECT `key`,`value` FROM system_settings WHERE `key` IN ("asaas_api_key","asaas_env","chatgpt_api_key","webhook_upload_url")');
         $get->execute();
         $settings = [];
         foreach ($get->fetchAll() as $r) { $settings[$r['key']] = $r['value']; }
@@ -26,7 +26,7 @@ class AdminController extends Controller
     public function saveSettings()
     {
         $this->guard();
-        $keys = ['asaas_api_key','asaas_env','chatgpt_api_key'];
+        $keys = ['asaas_api_key','asaas_env','chatgpt_api_key','webhook_upload_url'];
         $pdo = DB::pdo();
         foreach ($keys as $k) {
             $v = $_POST[$k] ?? null;

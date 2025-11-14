@@ -24,6 +24,11 @@
       <label>Asaas - API Key</label>
       <input type="password" name="asaas_api_key" value="<?php echo htmlspecialchars($settings["asaas_api_key"] ?? ''); ?>" placeholder="********************************">
     </div>
+    <div class="form-row">
+      <label>Webhook de Upload (recebe base64)</label>
+      <input type="url" name="webhook_upload_url" value="<?php echo htmlspecialchars($settings['webhook_upload_url'] ?? ''); ?>" placeholder="https://exemplo.com/webhook">
+      <div class="meta">Se vazio, o webhook não será chamado.</div>
+    </div>
     <button class="btn btn-secondary btn-sm" type="submit" style="margin-top:12px">Salvar Configurações</button>
   </form>
 
