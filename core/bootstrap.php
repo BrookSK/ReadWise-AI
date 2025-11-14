@@ -31,3 +31,7 @@ require_once __DIR__ . '/../config/config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Autoload do Composer (opcional)
+$composer = __DIR__ . '/../vendor/autoload.php';
+if (file_exists($composer)) { require_once $composer; }

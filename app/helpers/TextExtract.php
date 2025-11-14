@@ -17,16 +17,24 @@ class TextExtract
     {
         $text = '';
         $pdftotext = trim(self::which('pdftotext'));
-        if ($pdftotext !== '') {
+        if ($pdftotext !== '' && function_exists('shell_exec')) {
             $tmpTxt = $path . '.txt';
             @shell_exec('"' . $pdftotext . '" "' . $path . '" "' . $tmpTxt . '" 2>&1');
             if (file_exists($tmpTxt)) { $text = (string)file_get_contents($tmpTxt); @unlink($tmpTxt); }
+        }
+        // Fallback com biblioteca PHP pura (para PDFs digitais)
+        if (mb_strlen(trim($text)) < 50 && class_exists('Smalot\\PdfParser\\Parser')) {
+            try {
+                $parser = new \Smalot\PdfParser\Parser();
+                $pdf = $parser->parseFile($path);
+                $text = $pdf->getText() ?: $text;
+            } catch (\Throwable $e) { /* ignore */ }
         }
         // OCR fallback se texto curto
         if (mb_strlen(trim($text)) < 50) {
             $tesseract = trim(self::which('tesseract'));
             $pdftoppm = trim(self::which('pdftoppm'));
-            if ($tesseract !== '' && $pdftoppm !== '') {
+            if ($tesseract !== '' && $pdftoppm !== '' && function_exists('shell_exec')) {
                 $prefix = $path . '_page';
                 @shell_exec('"' . $pdftoppm . '" -r 200 "' . $path . '" "' . $prefix . '" 2>&1');
                 $pages = glob($prefix . '-*.ppm');
@@ -84,6 +92,7 @@ class TextExtract
 
     private static function which(string $bin): string
     {
+        if (!function_exists('shell_exec')) { return ''; }
         $cmd = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? ('where ' . $bin . ' 2>NUL') : ('which ' . $bin . ' 2>/dev/null');
         $out = shell_exec($cmd);
         return is_string($out) ? trim(explode("\n", $out)[0]) : '';
