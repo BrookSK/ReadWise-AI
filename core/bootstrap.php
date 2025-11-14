@@ -9,8 +9,15 @@ spl_autoload_register(function ($class) {
     foreach ($prefixes as $prefix => $dir) {
         if (strncmp($class, $prefix, strlen($prefix)) === 0) {
             $relative = substr($class, strlen($prefix));
-            $file = $baseDir . $dir . str_replace('\\', '/', $relative) . '.php';
+            $relativePath = str_replace('\\', '/', $relative);
+            // Caminho direto respeitando o case exato declarado
+            $file = $baseDir . $dir . $relativePath . '.php';
             if (file_exists($file)) { require_once $file; return; }
+            // Fallback: diretórios em minúsculas (controllers, helpers, models)
+            $dirName = dirname($relativePath);
+            $baseName = basename($relativePath);
+            $alt = $baseDir . $dir . ($dirName !== '.' ? strtolower($dirName) . '/' : '') . $baseName . '.php';
+            if (file_exists($alt)) { require_once $alt; return; }
         }
     }
     // Fallback genérico
