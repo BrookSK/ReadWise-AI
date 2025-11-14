@@ -50,12 +50,18 @@ class UploadController extends Controller
             die('Falha ao salvar arquivo.');
         }
 
+        // Salva registro do upload (processing)
+        $pdo = DB::pdo();
+        $stmt0 = $pdo->prepare("INSERT INTO file_uploads (user_id, filename, mime, pages, size_bytes, text_ref, status) VALUES (:uid, :fn, :mime, NULL, :sz, '', 'processing')");
+        $stmt0->execute([':uid'=>$userId, ':fn'=>$safe, ':mime'=>$mime, ':sz'=>$size]);
+        $uploadId = (int)$pdo->lastInsertId();
+
         // Envia webhook com base64 e metadados (não persiste base64)
         try {
             // Busca URL no system_settings
             $webhookUrl = null;
             try {
-                $cfg = DB::pdo()->prepare('SELECT `value` FROM system_settings WHERE `key` = "webhook_upload_url" LIMIT 1');
+                $cfg = $pdo->prepare('SELECT `value` FROM system_settings WHERE `key` = "webhook_upload_url" LIMIT 1');
                 $cfg->execute();
                 $row = $cfg->fetch();
                 if ($row && !empty($row['value'])) { $webhookUrl = trim($row['value']); }
@@ -66,6 +72,7 @@ class UploadController extends Controller
                     $b64 = base64_encode($bin);
                     $payload = [
                         'event' => 'upload.created',
+                        'upload_id' => $uploadId,
                         'user_id' => $userId,
                         'filename' => $orig,
                         'stored_filename' => $safe,
@@ -74,6 +81,10 @@ class UploadController extends Controller
                         'extension' => $ext,
                         'base64' => $b64,
                     ];
+                    // logging simples
+                    $logDir = __DIR__ . '/../../storage/logs/';
+                    if (!is_dir($logDir)) { @mkdir($logDir, 0775, true); }
+                    @file_put_contents($logDir . 'webhook.log', date('c') . " POST " . $webhookUrl . "\n", FILE_APPEND);
                     // Preferir cURL, com timeout curto
                     if (function_exists('curl_init')) {
                         $ch = curl_init($webhookUrl);
@@ -83,7 +94,8 @@ class UploadController extends Controller
                         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
                         curl_setopt($ch, CURLOPT_TIMEOUT, 8);
                         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
-                        @curl_exec($ch);
+                        $resp = @curl_exec($ch);
+                        @file_put_contents($logDir . 'webhook.log', "resp=" . substr((string)$resp,0,200) . "\n", FILE_APPEND);
                         @curl_close($ch);
                     } else {
                         $ctx = stream_context_create([
@@ -94,7 +106,8 @@ class UploadController extends Controller
                                 'timeout' => 8,
                             ]
                         ]);
-                        @file_get_contents($webhookUrl, false, $ctx);
+                        $resp = @file_get_contents($webhookUrl, false, $ctx);
+                        @file_put_contents($logDir . 'webhook.log', "resp=" . substr((string)$resp,0,200) . "\n", FILE_APPEND);
                     }
                     unset($b64, $bin, $payload);
                 }
@@ -109,12 +122,6 @@ class UploadController extends Controller
             $text = 'Texto não extraído nesta etapa (dev).';
         }
 
-        // Salva registro do upload
-        $pdo = DB::pdo();
-        // cria registro inicial em processing
-        $stmt0 = $pdo->prepare("INSERT INTO file_uploads (user_id, filename, mime, pages, size_bytes, text_ref, status) VALUES (:uid, :fn, :mime, NULL, :sz, '', 'processing')");
-        $stmt0->execute([':uid'=>$userId, ':fn'=>$safe, ':mime'=>$mime, ':sz'=>$size]);
-        $uploadId = (int)$pdo->lastInsertId();
         // atualiza com texto e status pronto
         $stmt = $pdo->prepare("UPDATE file_uploads SET text_ref = :txt, status = 'ready' WHERE id = :id");
         $stmt->execute([':txt'=>$text, ':id'=>$uploadId]);
