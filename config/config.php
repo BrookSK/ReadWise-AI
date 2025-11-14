@@ -16,8 +16,8 @@ define('BASE_URL', (function(){
 // DB (preencher depois)
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'readwise_ai');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'readwise_ai');
+define('DB_PASS', 'fE1&g9wNswI6tg!p');
 
 // Diretórios
 define('ASSETS_URL', BASE_URL . 'assets/');

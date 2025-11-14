@@ -1,0 +1,37 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# PHP settings per-environment
+.user.ini
+.env
+.env.*
+
+# Local-only configs (example: keep config.php tracked, override in config.local.php)
+config/config.local.php
+
+# Dependencies / package managers
+vendor/
+composer.phar
+composer.lock
+node_modules/
+
+# Build artifacts
+public/assets/build/
+
+# Runtime storage
+storage/uploads/
+storage/tmp/
+storage/logs/
+storage/**/*.ppm
+storage/**/*.png
+storage/**/*.txt
+
+# Binaries downloaded for convenience (Poppler/Tesseract)
+bin/
+
+# Misc
+*.cache
